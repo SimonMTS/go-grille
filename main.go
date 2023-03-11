@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 	"runtime"
+
+	"github.com/edsrzf/mmap-go"
 )
 
 func main() {
@@ -11,11 +13,13 @@ func main() {
 
 func optimized(maskFile, letterFile string, out *os.File) {
 	// Read input
-	mask, merr := os.ReadFile(maskFile)
-	letters, lerr := os.ReadFile(letterFile)
-	if merr != nil || lerr != nil || len(mask) != len(letters) {
-		panic("bad input")
-	}
+	mf, _ := os.Open(maskFile)
+	mask, _ := mmap.Map(mf, 0, 0)
+	mask.Lock()
+
+	lf, _ := os.Open(letterFile)
+	letters, _ := mmap.Map(lf, mmap.COPY, 0)
+	letters.Lock()
 
 	// Split input into processable chunks
 	var (
@@ -39,7 +43,7 @@ func optimized(maskFile, letterFile string, out *os.File) {
 	}
 
 	// Calculate outputs
-	done := make(chan bool)
+	done := make(chan struct{})
 	for i := range metaData {
 		go processSection(mask, letters, &metaData[i], done)
 	}
@@ -60,7 +64,7 @@ type meta struct {
 	NewEnd int
 }
 
-func processSection(mask, letters []byte, data *meta, done chan bool) {
+func processSection(mask, letters []byte, data *meta, done chan struct{}) {
 	count := data.Start
 	for i := data.Start; i < data.End; i++ {
 		if mask[i] == ' ' {
@@ -70,5 +74,5 @@ func processSection(mask, letters []byte, data *meta, done chan bool) {
 	}
 
 	data.NewEnd = count
-	done <- true
+	done <- struct{}{}
 }

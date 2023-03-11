@@ -1,7 +1,7 @@
 all: run clean
 
 build:
-	go build -o grille .
+	go build -o grille -gcflags=-B .
 
 clean:
 	rm -f ./grille
