@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"os"
 	"runtime"
 )
@@ -20,9 +21,13 @@ type Item struct {
 }
 
 func main() {
+	optimized(os.Args[1], os.Args[2], os.Stdout)
+}
+
+func optimized(maskFile, letterFile string, out io.Writer) {
 	// Read input
-	mask, merr := os.ReadFile(os.Args[1])
-	letters, lerr := os.ReadFile(os.Args[2])
+	mask, merr := os.ReadFile(maskFile)
+	letters, lerr := os.ReadFile(letterFile)
 	if merr != nil || lerr != nil || len(mask) != len(letters) {
 		panic("bad input")
 	}
@@ -56,12 +61,12 @@ func main() {
 	}
 
 	// Wait for all processing to be done
-	for _ = range results {
+	for range results {
 		<-done
 	}
 
 	// Print outputs
 	for _, result := range results {
-		os.Stdout.Write(result)
+		out.Write(result)
 	}
 }
