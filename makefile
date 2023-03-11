@@ -23,6 +23,12 @@ bench-cpu:
 bench-mem:
 	go tool pprof -http 127.0.0.1:8082 memprofile.out
 
+bench-loop:
+	go test -bench="Loop" -benchmem -memprofile memprofile.out -cpuprofile profile.out
+
+bench-branchless:
+	go test -bench="Branchless" -benchmem -memprofile memprofile.out -cpuprofile profile.out
+
 perf: build
 	perf stat -nr 100 sh -c './grille ./mask.txt ./letters.txt > /dev/null'
 

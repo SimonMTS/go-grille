@@ -64,6 +64,8 @@ type meta struct {
 	NewEnd int
 }
 
+//           Use this bit
+//                |
 //  " " = 0b00100000
 //  "#" = 0b00100011
 // "\n" = 0b00001010
@@ -72,7 +74,7 @@ func processSection(mask, letters []byte, data *meta, done chan struct{}) {
 	count := data.Start
 	for i := data.Start; i < data.End; i++ {
 		letters[count] = letters[i]
-		count += int(^mask[i] & 0b00000010 >> 1)
+		count += int(((^mask[i]) & 0b10) >> 1)
 	}
 
 	data.NewEnd = count
