@@ -12,7 +12,7 @@ run: build
 	# is correct
 
 bench:
-	go test -bench=. -benchtime 10x -benchmem -memprofile memprofile.out -cpuprofile profile.out
+	go test -bench="Optimized" -benchtime 10x -benchmem -memprofile memprofile.out -cpuprofile profile.out
 
 bench-cpu:
 	go tool pprof -http 127.0.0.1:8081 profile.out

@@ -57,6 +57,7 @@ func optimized(maskFile, letterFile string, out io.Writer) {
 	results := make([][]byte, len(items))
 	done := make(chan bool, len(items))
 	for i, item := range items {
+		// results[i] = make([]byte, 0, chunkSize) // This makes it slower
 		go ProcessItem(&results[i], item.Mask, item.Letters, done)
 	}
 
