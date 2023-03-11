@@ -1,17 +1,20 @@
 package main
 
 import (
+	"bufio"
 	"io"
-	"os"
+	"io/ioutil"
 )
 
 func simple(maskFile, letterFile string, out io.Writer) {
-	mask, _ := os.ReadFile(maskFile)
-	letters, _ := os.ReadFile(letterFile)
+	grill, _ := ioutil.ReadFile(maskFile)
+	cipher, _ := ioutil.ReadFile(letterFile)
+	w := bufio.NewWriter(out)
+	defer w.Flush()
 
-	for i, b := range mask {
+	for i, b := range grill {
 		if b == ' ' {
-			out.Write([]byte{letters[i]})
+			w.WriteByte(cipher[i])
 		}
 	}
 }
