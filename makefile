@@ -1,7 +1,7 @@
 all: run clean
 
 build:
-	go build -o grille -gcflags=-B .
+	go build -o grille -gcflags=-B ./main.go
 
 clean:
 	rm -f ./grille
@@ -30,5 +30,5 @@ bench-branchless:
 	go test -bench="Branchless" -benchmem -memprofile memprofile.out -cpuprofile profile.out
 
 perf: build
-	perf stat -nr 100 sh -c './grille ./mask.txt ./letters.txt > /dev/null'
+	perf stat -nr 100 ./grille ./mask.txt ./letters.txt > /dev/null
 
