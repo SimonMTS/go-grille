@@ -1,30 +1,15 @@
 package main
 
 import (
-	"io"
 	"os"
 	"runtime"
 )
-
-func ProcessItem(out *[]byte, mask, letters []byte, done chan bool) {
-	for i, b := range mask {
-		if b == ' ' {
-			*out = append(*out, letters[i])
-		}
-	}
-	done <- true
-}
-
-type Item struct {
-	Mask    []byte
-	Letters []byte
-}
 
 func main() {
 	optimized(os.Args[1], os.Args[2], os.Stdout)
 }
 
-func optimized(maskFile, letterFile string, out io.Writer) {
+func optimized(maskFile, letterFile string, out *os.File) {
 	// Read input
 	mask, merr := os.ReadFile(maskFile)
 	letters, lerr := os.ReadFile(letterFile)
@@ -35,39 +20,55 @@ func optimized(maskFile, letterFile string, out io.Writer) {
 	// Split input into processable chunks
 	var (
 		inputSize  = len(mask)
-		chunkCount = runtime.NumCPU() * 2
+		chunkCount = runtime.NumCPU() * 8
 		chunkSize  = inputSize / chunkCount
 		leftOver   = inputSize - (chunkSize * chunkCount)
-		items      = make([]Item, chunkCount)
+		metaData   = make([]meta, 0, chunkCount)
 	)
 	for i := 0; i < chunkCount; i++ {
-		items = append(items, Item{
-			Mask:    mask[i*chunkSize : (i+1)*chunkSize],
-			Letters: letters[i*chunkSize : (i+1)*chunkSize],
+		metaData = append(metaData, meta{
+			Start: i * chunkSize,
+			End:   (i + 1) * chunkSize,
 		})
 	}
 	if leftOver > 0 {
-		items = append(items, Item{
-			Mask:    mask[inputSize-leftOver:],
-			Letters: letters[inputSize-leftOver:],
+		metaData = append(metaData, meta{
+			Start: inputSize - leftOver,
+			End:   inputSize,
 		})
 	}
 
 	// Calculate outputs
-	results := make([][]byte, len(items))
-	done := make(chan bool, len(items))
-	for i, item := range items {
-		// results[i] = make([]byte, 0, chunkSize) // This makes it slower
-		go ProcessItem(&results[i], item.Mask, item.Letters, done)
+	done := make(chan bool)
+	for i := range metaData {
+		go processSection(mask, letters, &metaData[i], done)
 	}
 
 	// Wait for all processing to be done
-	for range results {
+	for range metaData {
 		<-done
 	}
 
-	// Print outputs
-	for _, result := range results {
-		out.Write(result)
+	for _, d := range metaData {
+		out.Write(letters[d.Start:d.NewEnd])
 	}
+}
+
+type meta struct {
+	Start  int
+	End    int
+	NewEnd int
+}
+
+func processSection(mask, letters []byte, data *meta, done chan bool) {
+	count := data.Start
+	for i := data.Start; i < data.End; i++ {
+		if mask[i] == ' ' {
+			letters[count] = letters[i]
+			count++
+		}
+	}
+
+	data.NewEnd = count
+	done <- true
 }
