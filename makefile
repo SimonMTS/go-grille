@@ -1,34 +1,39 @@
-all: run clean
+all: build
 
 build:
-	go build -o grille -gcflags=-B ./main.go
+	go build -o bin/optimized    -gcflags=-B ./cmd/optimized
+	go build -o bin/instrumented -gcflags=-B ./cmd/instrumented
+	go build -o bin/ref ./cmd/ref
 
-clean:
-	rm -f ./grille
+# build:
+# 	go build -o grille -gcflags=-B ./main.go
 
-run: build
-	./grille ./mask.txt ./letters.txt | md5sum
-	# 05ea1fcfd9473c0ba81a20ee03a68814
-	# is correct
+# clean:
+# 	rm -f ./grille
 
-compare:
-	go test -bench=. -benchtime 20x -benchmem
+# run: build
+# 	./grille ./mask.txt ./letters.txt | md5sum
+# 	# 05ea1fcfd9473c0ba81a20ee03a68814
+# 	# is correct
 
-bench:
-	go test -bench="Optimized" -benchtime 10x -benchmem -memprofile memprofile.out -cpuprofile profile.out
+# compare:
+# 	go test -bench=. -benchtime 20x -benchmem
 
-bench-cpu:
-	go tool pprof -http 127.0.0.1:8081 profile.out
+# bench:
+# 	go test -bench="Optimized" -benchtime 10x -benchmem -memprofile memprofile.out -cpuprofile profile.out
 
-bench-mem:
-	go tool pprof -http 127.0.0.1:8082 memprofile.out
+# bench-cpu:
+# 	go tool pprof -http 127.0.0.1:8081 profile.out
 
-bench-loop:
-	go test -bench="Loop" -benchmem -memprofile memprofile.out -cpuprofile profile.out
+# bench-mem:
+# 	go tool pprof -http 127.0.0.1:8082 memprofile.out
 
-bench-branchless:
-	go test -bench="Branchless" -benchmem -memprofile memprofile.out -cpuprofile profile.out
+# bench-loop:
+# 	go test -bench="Loop" -benchmem -memprofile memprofile.out -cpuprofile profile.out
 
-perf: build
-	perf stat -nr 100 ./grille ./mask.txt ./letters.txt > /dev/null
+# bench-branchless:
+# 	go test -bench="Branchless" -benchmem -memprofile memprofile.out -cpuprofile profile.out
+
+# perf: build
+# 	perf stat -nr 100 ./grille ./mask.txt ./letters.txt > /dev/null
 
