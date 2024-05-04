@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
         return 3;
     }
 
-    int count = maskStat.st_size / 2;
+    int count = 0;
     for (int i = 0; i < maskStat.st_size; i++) {
         letters[count] = letters[i];
         count += ((~mask[i]) & 0b10) >> 1;

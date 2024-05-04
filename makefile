@@ -2,6 +2,7 @@ all: build
 
 build:
 	go build -o bin/optimized    -gcflags=-B ./cmd/optimized
+	go build -o bin/optimized-v2 -gcflags=-B ./cmd/optimized-v2
 	go build -o bin/instrumented -gcflags=-B ./cmd/instrumented
 	go build -o bin/ref ./cmd/ref
 

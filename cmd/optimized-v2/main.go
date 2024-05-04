@@ -7,8 +7,7 @@ import (
 	"syscall"
 )
 
-// Should be a good bit more than the number of core's
-const routines = 100
+const routines = 16
 
 func main() {
 	if len(os.Args) < 3 {
@@ -65,18 +64,15 @@ func main() {
 	}
 
 	// Calculate outputs
-	done := make(chan struct{})
-	for i := range metaData {
-		go processSection(mask, letters, &metaData[i], done)
+	out := make([]chan meta, routines)
+	for i := range out {
+		out[i] = make(chan meta)
+		go processSection(mask, letters, &metaData[i], out[i])
 	}
 
-	// Wait for all processing to be done
-	for range metaData {
-		<-done
-	}
-
-	for _, d := range metaData {
-		os.Stdout.Write(letters[d.Start:d.End])
+	for i := range out {
+		m := <-out[i]
+		os.Stdout.Write(letters[m.Start:m.End])
 	}
 }
 
@@ -91,42 +87,15 @@ type meta struct {
 //  "#" = 0b00100011
 // "\n" = 0b00001010
 
-func processSection(mask, letters []byte, data *meta, done chan struct{}) {
+func processSection(mask, letters []byte, data *meta, out chan meta) {
 	count := data.Start
-	for i := data.Start; i < data.End; i += 10 {
+	for i := data.Start; i < data.End; i++ {
 		letters[count] = letters[i]
 		count += int(((^mask[i]) & 0b10) >> 1)
-
-		letters[count] = letters[i+1]
-		count += int(((^mask[i+1]) & 0b10) >> 1)
-
-		letters[count] = letters[i+2]
-		count += int(((^mask[i+2]) & 0b10) >> 1)
-
-		letters[count] = letters[i+3]
-		count += int(((^mask[i+3]) & 0b10) >> 1)
-
-		letters[count] = letters[i+4]
-		count += int(((^mask[i+4]) & 0b10) >> 1)
-
-		letters[count] = letters[i+5]
-		count += int(((^mask[i+5]) & 0b10) >> 1)
-
-		letters[count] = letters[i+6]
-		count += int(((^mask[i+6]) & 0b10) >> 1)
-
-		letters[count] = letters[i+7]
-		count += int(((^mask[i+7]) & 0b10) >> 1)
-
-		letters[count] = letters[i+8]
-		count += int(((^mask[i+8]) & 0b10) >> 1)
-
-		letters[count] = letters[i+9]
-		count += int(((^mask[i+9]) & 0b10) >> 1)
 	}
 
 	data.End = count
-	done <- struct{}{}
+	out <- *data
 }
 
 func m[T any](val T, err error) T {
